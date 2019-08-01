@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 页面meta -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>用户订单查询</title>
+        <meta name="description" content="用户商品查询">
+        <meta name="keywords" content="用户商品查询">
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <!-- 引入样式 -->
+        <!--<link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css">-->
+        <link rel="stylesheet" href="../plugins/elementui/index.css">
+        <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="../css/style.css">
+        <link rel="stylesheet" href="../css/orderset.css">
+        <link rel="stylesheet" href="../css/myCSS.css">
+        <!--<link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css">
+        <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css">-->
+        <!-- 引入组件库 -->
+        <script src="../plugins/vue/vue.js"></script>
+        <script src="../plugins/elementui/index.js"></script>
+        <script type="text/javascript" src="../plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="../plugins/axios/axios.js"></script>
+    </head>
+    <body class="hold-transition">
+    <div id="app">
+        <div class="content-header">
+            <h3 class="box-title">用户商品查询</h3>
+        </div>
+        <div class="app-container">
+            <div class="box">
+                <div class="box ordersetting"style="width: auto">
+                    <el-card class="box-card" style="height: 80px">
+                        <el-row>
+                            <div class="box-tools pull-left">
+                                <el-popover
+                                     placement="bottom"
+                                     width="265"
+                                     trigger="hover">
+                                    <el-row>
+                                        <el-input v-model="fileName" prefix-icon="el-icon-edit" placeholder="请输入导出文件名" style="width: 265px"></el-input>
+                                    </el-row>
+                                    <br>
+                                    <el-row>
+                                        <el-col :span="12" >
+                                            <el-button size="small" style="height: 40px" type="primary" @click="exportUserOrderItem('1')">所有商品导出<i class="el-icon-download el-icon--right"></i></el-button>
+                                        </el-col>
+                                        <el-col :span="12">
+                                            <el-button size="small" style="height: 40px" type="warning" @click="exportUserOrderItem('2')">查询条件导出<i class="el-icon-download el-icon--right"></i></el-button>
+                                        </el-col>
+
+                                    </el-row>
+
+                                    <el-button slot="reference" type="success">商品导出<i class="el-icon-star-off el-icon--right"></i></el-button>
+                                </el-popover>
+
+                                <el-button type="info" onclick="window.location.reload();">刷新<i class="el-icon-refresh el-icon--right"></i></el-button>
+                            </div>
+                            <div class="box-tools pull-right">
+                                <el-form :inline="true" class="demo-form-inline">
+                                    <el-form-item label="起始时间:">
+                                        <el-date-picker
+                                                v-model="timeScope"
+                                                type="datetimerange"
+                                                :picker-options="pickerOptions"
+                                                range-separator="至"
+                                                size="mini"
+                                                width="300"
+                                                start-placeholder="开始日期"
+                                                end-placeholder="结束日期"
+                                                align="right">
+                                        </el-date-picker>
+                                    </el-form-item>
+                                    <el-form-item label="买家ID：">
+                                        <el-input v-model="searchEntity.userId" size="mini" placeholder="用户ID" style="width: 125px"></el-input>
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-button type="primary" @click="searchOrderItemList(1)"><i class="el-icon-search el-icon--left"></i>查询</el-button>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                        </el-row>
+                    </el-card>
+                    <template style="width: auto">
+                        <el-table
+                                ref="multipleTable"
+                                v-loading="loading"
+                                element-loading-text="拼命加载中"
+                                element-loading-spinner="el-icon-loading"
+                                element-loading-background="rgba(0, 0, 0, 0.8)"
+                                :data="list"
+                                height="600"
+                                stripe
+                                tooltip-effect="dark"
+                                style="width: 100%"
+                                @selection-change="handleSelectionChange">
+                            <el-table-column
+                                    type="selection"
+                                    min-width="10%"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="Id"
+                                    prop="id"
+                                    width="180"
+                                    fixed
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="商品ID"
+                                    prop="itemId"
+                                    sortable
+                                    width="150"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="SPU_ID"
+                                    prop="goodsId"
+                                    width="150"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="订单Id"
+                                    prop="orderId"
+                                    width="180"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="标题"
+                                    prop="title"
+                                    width="190"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    prop="price"
+                                    label="单价"
+                                    width="100"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="商品数量"
+                                    prop="num"
+                                    sortable
+                                    width="100"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="总金额"
+                                    prop="totalFee"
+                                    sortable
+                                    width="130"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    label="用户Id"
+                                    prop="userId"
+                                    width="150"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    prop="sellerId"
+                                    label="卖家Id"
+                                    width="150"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column
+                                    prop="picPath"
+                                    label="图片"
+                                    width="150"
+                                    align="center">
+                            </el-table-column>
+                            <el-table-column label="操作"
+                                             fixed="right"
+                                             align="center">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" style="width: 63px" type="primary" @click="entity=scope.row;dialogFormVisible = true"><i class="el-icon-view">详情</i></el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </template><br>
+                    <hr>
+                    <div style="text-align: center">
+                        <template>
+                            <!--<navigation :pages="pages" :current.sync="pageNo"  @navpage="searchList"></navigation>-->
+                            <el-pagination
+                                    background
+                                    layout="total, sizes, prev, pager, next, jumper"
+                                    :current-page.sync="pageNo"
+                                    @size-change="handleSizeChange"
+                                    @current-change="searchOrderItemList"
+                                    :page-sizes="[10, 20, 40, 60, 80, 100]"
+                                    :page-size="pageSize"
+                                    :page-count="pages"
+                                    :total="total">
+                            </el-pagination>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 数据表格 -->
+        <el-dialog title="订单详情" :visible.sync="dialogFormVisible" style="width: 1000px" class="abow_dialog">
+            <hr>
+            <el-form :model="entity" label-position="right">
+                <el-form-item label="Id" :label-width="formLabelWidth">
+                    <el-input placeholder="Id" :readonly="true" style="width: 340px" v-model="entity.Id" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="商品Id" :label-width="formLabelWidth">
+                    <el-input placeholder="商品Id" :readonly="true" style="width: 340px" v-model="entity.itemId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="SPU_ID" :label-width="formLabelWidth">
+                    <el-input placeholder="SPU_ID" :readonly="true" style="width: 340px" v-model="entity.goodsId" autocomplete="off"></el-input>
+
+                </el-form-item>
+                <el-form-item label="订单Id" :label-width="formLabelWidth">
+                    <el-input placeholder="订单Id" :readonly="true" style="width: 340px" v-model="entity.orderId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="标题" :label-width="formLabelWidth">
+                    <el-input placeholder="标题" :readonly="true" style="width: 340px" v-model="entity.title" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="单价" :label-width="formLabelWidth">
+                    <el-input placeholder="单价" :readonly="true" style="width: 340px" v-model="entity.price" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="商品数量" :label-width="formLabelWidth">
+                    <el-input placeholder="商品数量" :readonly="true" style="width: 340px" v-model="entity.num" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="总金额" :label-width="formLabelWidth">
+                    <el-input placeholder="总金额" :readonly="true" style="width: 340px" v-model="entity.totalFee" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="用户Id" :label-width="formLabelWidth">
+                    <el-input placeholder="用户Id" :readonly="true" style="width: 340px" v-model="entity.userId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="商家ID" :label-width="formLabelWidth">
+                    <el-input placeholder="商家ID" :readonly="true" style="width: 340px" v-model="entity.sellerId" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="图片" :label-width="formLabelWidth">
+                    <image style="width: 100px; height: 100px" name="img" :src="entity.picPath"></image>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="dialogFormVisible=false">确 定</el-button>
+            </div>
+        </el-dialog>
+
+    </div>
+    </body>
+    <!-- 引入组件库 -->
+    <script src="../plugins/vue/vue.js"></script>
+    <script src="../plugins/axios/axios.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script src="../js/pagination.js"></script>
+    <script src="../js/controller/userOrderItem.js"></script>
+</html>
